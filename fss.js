@@ -1297,9 +1297,10 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 
         $.extend(true, MESH, mesh);
         $.extend(true, LIGHT, light);
-
+        
+        var self = $(this);
         var container = $("<div class='output' style='position:absolute; overflow:hidden; left:0px;right:0px; top:0; bottom:0;z-index:-1;'></div>");
-        $(this).append(container);
+        self.append(container);
 
 
         //------------------------------
@@ -1433,14 +1434,55 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
         var callbacks = {
             resize: function (width, height) {
                 if (typeof width == "undefined" || typeof width === undefined) {
-                    width = $(this).outerWidth(true);
+                    width = self.outerWidth(true);
                 }
                 if (typeof height == "undefined" || typeof height === undefined) {
-                    height = $(this).outerHeight(true);
+                    height = self.outerHeight(true);
                 }
                 renderer.setSize(width, height);
                 FSS.Vector3.set(center, renderer.halfWidth, renderer.halfHeight);
                 createMesh();
+            },
+            update: function (mesh, light) {
+                $.extend(true, MESH, mesh);
+                $.extend(true, LIGHT, light);
+                // Add Mesh Controls
+                //Ambient
+                for (i = 0, l = scene.meshes.length; i < l; i++) {
+                    scene.meshes[i].material.ambient.set(MESH.ambient);
+                }
+                //Diffuse
+                for (i = 0, l = scene.meshes.length; i < l; i++) {
+                    scene.meshes[i].material.diffuse.set(MESH.diffuse);
+                }
+                //width
+                if (geometry.width !== MESH.width * renderer.width) {
+                    createMesh();
+                }
+                if (geometry.height !== MESH.height * renderer.height) {
+                    createMesh();
+                }
+                if (geometry.segments !== MESH.segments) {
+                    createMesh();
+                }
+                if (geometry.slices !== MESH.slices) {
+                    createMesh();
+                }
+
+                // Add Light Controls
+                for (i = 0, l = scene.lights.length; i < l; i++) {
+                    light = scene.lights[i];
+                    light.ambient.set(LIGHT.ambient);
+                    light.ambientHex = light.ambient.format();
+                }
+                for (i = 0, l = scene.lights.length; i < l; i++) {
+                    light = scene.lights[i];
+                    light.diffuse.set(LIGHT.diffuse);
+                    light.diffuseHex = light.diffuse.format();
+                }
+                if (scene.lights.length !== LIGHT.count) {
+                    createLights();
+                }
             }
         };
 
@@ -1553,8 +1595,8 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 
         function addEventListeners() {
             $(window).on('resize', onWindowResize);
-            $(this).on('click', onMouseClick);
-            $(this).on('mousemove', onMouseMove);
+            self.on('click', onMouseClick);
+            self.on('mousemove', onMouseMove);
         }
 
         //------------------------------
@@ -1573,7 +1615,8 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
         }
 
         function onWindowResize(event) {
-            callbacks.resize(container.outerWidth(true), container.outerHeight(true));
+//            console.log(self.width() + ", " +  self.height());
+            callbacks.resize(self.outerWidth(true), self.outerHeight(true));
             render();
         }
 
