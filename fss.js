@@ -405,7 +405,7 @@ FSS.Vector4 = {
  * @author Matthew Wagerfield
  */
 FSS.Color = function (hex, opacity) {
-    this.rgba = FSS.Vector4.create();
+    this.rgba = [];
     this.hex = hex || '#000000';
     this.opacity = FSS.Utils.isNumber(opacity) ? opacity : 1;
     this.set(this.hex, this.opacity);
@@ -413,30 +413,46 @@ FSS.Color = function (hex, opacity) {
 
 FSS.Color.prototype = {
     set: function (hex, opacity) {
-        hex = hex.replace('#', '');
-        var size = hex.length / 3;
-        this.rgba[0] = parseInt(hex.substring(size * 0, size * 1), 16) / 255;
-        this.rgba[1] = parseInt(hex.substring(size * 1, size * 2), 16) / 255;
-        this.rgba[2] = parseInt(hex.substring(size * 2, size * 3), 16) / 255;
-        this.rgba[3] = FSS.Utils.isNumber(opacity) ? opacity : this.rgba[3];
+        if (hex.indexOf("#") === -1) {
+            if (hex.indexOf('rgb(') === 0) {
+                var pars = hex.indexOf(',');
+                this.rgba[0] = parseInt(hex.substr(4, pars));
+                this.rgba[1] = parseInt(hex.substr(pars + 1, hex.indexOf(',', pars)));
+                this.rgba[2] = parseInt(hex.substr(hex.indexOf(',', pars + 1) + 1, hex.indexOf(')')));
+                this.rgba[3] = 1;
+            } else if (hex.indexOf('rgba(') === 0) {
+                var pars = hex.indexOf(',');
+                var repars = hex.indexOf(',', pars + 1);
+                this.rgba[0] = parseInt(hex.substr(5, pars));
+                this.rgba[1] = parseInt(hex.substr(pars + 1, repars));
+                this.rgba[2] = parseInt(hex.substr(hex.indexOf(',', pars + 1) + 1, hex.indexOf(',', repars)));
+                this.rgba[3] = parseFloat(hex.substr(hex.indexOf(',', repars + 1) + 1, hex.indexOf(')')));
+            }
+        } else {
+            hex = hex.replace('#', '');
+            var size = hex.length / 3;
+            this.rgba[0] = parseInt(hex.substring(size * 0, size * 1), 16) / 255;
+            this.rgba[1] = parseInt(hex.substring(size * 1, size * 2), 16) / 255;
+            this.rgba[2] = parseInt(hex.substring(size * 2, size * 3), 16) / 255;
+            this.rgba[3] = FSS.Utils.isNumber(opacity) ? opacity : this.rgba[3];
+        }
+
         return this;
     },
-    hexify: function (channel) {
-        var hex = Math.ceil(channel * 255).toString(16);
-        if (hex.length === 1) {
-            hex = '0' + hex;
-        }
-        return hex;
-    },
+//    hexify: function (channel) {
+//        var hex = Math.ceil(channel * 255).toString(16);
+//        if (hex.length === 1) {
+//            hex = '0' + hex;
+//        }
+//        return hex;
+//    },
     format: function () {
-        var r = this.hexify(this.rgba[0]);
-        var g = this.hexify(this.rgba[1]);
-        var b = this.hexify(this.rgba[2]);
-        this.hex = '#' + r + g + b;
-        if (typeof this.rgba[3] !== "undefined") {
-            return "rgba(" + this.rgba[0] + "," + this.rgba[1] + "," + this.rgba[2] + "," + this.rgba[3] + ")"; //this.hex
-        }
-        return this.hex;
+        return "rgba(" + this.rgba[0] + "," + this.rgba[1] + "," + this.rgba[2] + "," + this.rgba[3] + ")"; //this.hex
+//        var r = this.hexify(this.rgba[0]);
+//        var g = this.hexify(this.rgba[1]);
+//        var b = this.hexify(this.rgba[2]);
+//        this.hex = '#' + r + g + b;
+//        return this.hex;
     }
 };
 
@@ -597,8 +613,8 @@ FSS.Plane.prototype = Object.create(FSS.Geometry.prototype);
  * @author Matthew Wagerfield
  */
 FSS.Material = function (ambient, diffuse) {
-    this.ambient = new FSS.Color(ambient || '#444444');
-    this.diffuse = new FSS.Color(diffuse || '#FFFFFF');
+    this.ambient = new FSS.Color(ambient || 'rgba(68,68,68, 1)');
+    this.diffuse = new FSS.Color(diffuse || 'rgba(255,255,255, 1)');
     this.slave = new FSS.Color();
 };
 
@@ -617,7 +633,8 @@ FSS.Mesh = function (geometry, material) {
 FSS.Mesh.prototype = Object.create(FSS.Object.prototype);
 
 FSS.Mesh.prototype.update = function (lights, calculate) {
-    var t, triangle, l, light, illuminance;
+    var t, triangle, l, light, illuminance, light_count;
+    light_count = lights.length;
 
     // Update Geometry
     this.geometry.update();
@@ -635,6 +652,7 @@ FSS.Mesh.prototype.update = function (lights, calculate) {
             // Iterate through Lights
             for (l = lights.length - 1; l >= 0; l--) {
                 light = lights[l];
+                
 
                 // Calculate Illuminance
                 FSS.Vector3.subtractVectors(light.ray, light.position, triangle.centroid);
@@ -648,18 +666,44 @@ FSS.Mesh.prototype.update = function (lights, calculate) {
                     illuminance = Math.max(Math.abs(illuminance), 0);
                 }
 
-                // Calculate Ambient Light
-                FSS.Vector4.multiplyVectors(this.material.slave.rgba, this.material.ambient.rgba, light.ambient.rgba);
+
+
+//                 Calculate Ambient Light
+                for (var i = 0; i < 4; i++) {
+                    this.material.slave.rgba[i] = .5*(0.5 * this.material.ambient.rgba[i] + (0.5/light_count) * light.ambient.rgba[i]);
+                    if (i !== 3) {
+                        this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i]);
+                    }
+                }
                 FSS.Vector4.add(triangle.color.rgba, this.material.slave.rgba);
 
                 // Calculate Diffuse Light
-                FSS.Vector4.multiplyVectors(this.material.slave.rgba, this.material.diffuse.rgba, light.diffuse.rgba);
-                FSS.Vector4.multiplyScalar(this.material.slave.rgba, illuminance);
+                for (var i = 0; i < 4; i++) {
+                    this.material.slave.rgba[i] = 1*(0.5 * this.material.diffuse.rgba[i] + (0.5/light_count) * light.diffuse.rgba[i]);
+                    if (i !== 3) {
+                        this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i]);
+                    }
+                }
+//                FSS.Vector4.multiplyVectors(this.material.slave.rgba, this.material.diffuse.rgba, light.diffuse.rgba);
+//                FSS.Vector4.multiplyScalar(this.material.slave.rgba, illuminance);
+                for (var i = 0; i < 3; i++) {
+                    this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i] * illuminance);
+                }
                 FSS.Vector4.add(triangle.color.rgba, this.material.slave.rgba);
+
+//                console.log("light: " + light.ambient.rgba);
+//                console.log("material- ambient: " + this.material.ambient.rgba);
+//                console.log("material- slave: " + this.material.slave.rgba);
+//                console.log(illuminance);
+//                throw new Error("d");
             }
 
+
+
             // Clamp & Format Color
-            FSS.Vector4.clamp(triangle.color.rgba, 0, 1);
+            FSS.Vector4.clamp(triangle.color.rgba, 0, 255);
+            triangle.color.rgba[3] = Math.min(triangle.color.rgba[3], 1);
+//            console.log("triangle: " + triangle.color.rgba);
         }
     }
     return this;
@@ -771,24 +815,32 @@ FSS.CanvasRenderer.prototype.render = function (scene) {
             // Render Triangles
             for (t = mesh.geometry.triangles.length - 1; t >= 0; t--) {
                 triangle = mesh.geometry.triangles[t];
-                color = triangle.color.format();
+                c = triangle.color.rgba;
+                color = "rgba(" + c[0] + "," + c[1] + ", " + c[2] + "," + c[3] + ")";
+
                 this.context.beginPath();
                 this.context.moveTo(triangle.a.position[0], triangle.a.position[1]);
                 this.context.lineTo(triangle.b.position[0], triangle.b.position[1]);
                 this.context.lineTo(triangle.c.position[0], triangle.c.position[1]);
                 this.context.closePath();
-                this.context.strokeStyle = scene.vertex.lineColor;
-                this.context.fillStyle = color;
+                if(scene.line.draw !== false) {
+                    this.context.strokeStyle = scene.line.fill;
+                } else {
+                    this.context.strokeStyle = color;
+                }
                 this.context.stroke();
+                this.context.fillStyle = color; //Color of triangle
                 this.context.fill();
-
-                this.context.beginPath();
-                this.context.arc(triangle.a.position[0], triangle.a.position[1], scene.vertex.radius, 0, pi2, false);
-                this.context.fillStyle = scene.vertex.fill;
-                this.context.fill();
-                this.context.lineWidth = scene.vertex.strokeWidth;
-                this.context.strokeStyle = scene.vertex.strokeColor;
-                this.context.stroke();
+                
+                if(scene.vertex.draw !== false) { 
+                    this.context.beginPath();
+                    this.context.arc(triangle.a.position[0], triangle.a.position[1], scene.vertex.radius, 0, pi2, false);
+                    this.context.fillStyle = scene.vertex.fill;
+                    this.context.fill();
+                    this.context.lineWidth = scene.vertex.strokeWidth;
+                    this.context.strokeStyle = scene.vertex.strokeColor;
+                    this.context.stroke();
+                }
 
             }
         }
@@ -1263,7 +1315,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 };
 
 (function () {
-    $.fn.FSS = function (MESH, LIGHT, VERTEX) {
+    $.fn.FSS = function (MESH, LIGHT, VERTEX, LINE) {
         var getDataAttr = function (element) {
             var data_option = [
                 [],
@@ -1314,9 +1366,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                 return;
             }
             if (typeof bits[1] !== "undefined") {
-                //            console.log('splitting');
                 bits = bits[1].split(")")[0].split(",");
-
                 return "rgb(" + bits[0] + "," + bits[1] + "," + bits[2] + ")";
             }
             return;
@@ -1344,6 +1394,12 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
             fill: "rgba(0, 0, 0, 0)",
             strokeWidth: 0,
             strokeColor: "rgba(0, 0, 0, 0)",
+            draw: false
+        };
+        
+        var line_default = {
+            fill: "rgba(0, 0, 0, 0)",
+            draw: false
         };
 
         //------------------------------
@@ -1353,8 +1409,8 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
             count: 2,
             xyScalar: 1,
             zOffset: 100,
-            ambient: 'rgba(136, 0, 102, 1)',
-            diffuse: 'rgba(255, 136, 0, 1)',
+            ambient: 'rgba(0, 0, 0, 1)',
+            diffuse: 'rgba(255, 0, 0, 1)',
             speed: 0.010,
             gravity: 1200,
             dampening: 0.95,
@@ -1374,13 +1430,11 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 
         MESH = $.extend(true, mesh_default, MESH);
         VERTEX = $.extend(true, vertex_default, VERTEX);
+        LINE = $.extend(true, line_default, LINE);
 
         for (var i = 0; i < LIGHT.length; i++) {
             LIGHT[i] = $.extend(true, {}, light_default, LIGHT[i]);
         }
-
-        /* 		console.log(LIGHT); */
-
 
         var self = $(this);
         var container = $("<div class='output' style='position:absolute; overflow:hidden; left:0px;right:0px; top:0; bottom:0;z-index:-1;'></div>");
@@ -1465,6 +1519,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
         function createScene() {
             scene = new FSS.Scene();
             scene.vertex = VERTEX;
+            scene.line = LINE;
         }
 
         function createMesh() {
@@ -1535,12 +1590,14 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                 FSS.Vector3.set(center, renderer.halfWidth, renderer.halfHeight);
                 createMesh();
             },
-            update: function (MESH, LIGHT, VERTEX) {
+            update: function (MESH, LIGHT, VERTEX, LINE) {
                 VERTEX = $.extend(true, vertex_default, VERTEX);
+                LINE = $.extend(true, line_default, LINE);
                 MESH = $.extend(true, mesh_default, MESH);
                 var box_data_option = getDataAttr(self);
                 MESH = $.extend(true, MESH, box_data_option[0]);
                 scene.vertex = VERTEX;
+                scene.line = LINE;
                 for (var i = 0; i < LIGHT.length; i++) {
                     LIGHT[i] = $.extend(true, light_default, LIGHT[i]);
                 }
@@ -1548,9 +1605,6 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                 //Ambient
                 for (i = 0, l = scene.meshes.length; i < l; i++) {
                     scene.meshes[i].material.ambient.set(MESH.ambient);
-                }
-                //Diffuse
-                for (i = 0, l = scene.meshes.length; i < l; i++) {
                     scene.meshes[i].material.diffuse.set(MESH.diffuse);
                 }
                 //width
@@ -1591,12 +1645,6 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 
             },
             animateColor: function (colors) {
-                function hex(r, g, b) {
-                    return "#" +
-                            ("0" + parseInt(r, 10).toString(16)).slice(-2) +
-                            ("0" + parseInt(g, 10).toString(16)).slice(-2) +
-                            ("0" + parseInt(b, 10).toString(16)).slice(-2);
-                }
                 var length = colors.length;
                 var height = Math.round($(document).height() / length); // Height of the segment between two colors
                 var i = Math.floor($(window).scrollTop() / height); // Start color index
@@ -1605,11 +1653,14 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                 var c2 = colors[(i + 1) % length]; // End color
                 var r = c1[0] + Math.round((c2[0] - c1[0]) * d),
                         g = c1[1] + Math.round((c2[1] - c1[1]) * d),
-                        b = c1[2] + Math.round((c2[2] - c1[2]) * d);
-                this.update({}, [{
-                        ambient: hex(r, g, b),
-                        diffuse: hex(r, g, b)
-                    }], {});
+                        b = c1[2] + Math.round((c2[2] - c1[2]) * d),
+                        a = c1[3] + Math.round((c2[3] - c1[3]) * d);
+                var string = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+//                console.log("update:" + string); //working!
+                this.update({
+                    ambient: string,
+                    diffuse: string
+                }, LIGHT, VERTEX, LINE);
             }
         };
 
@@ -1631,7 +1682,6 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                 for (var i = 0; i < LIGHT[l].count; i++) {
 
                     light = scene.lights[light_index];
-                    /* 					console.log(l); */
 
                     // Update Bounds
                     FSS.Vector3.copy(LIGHT[l].bounds, center);
@@ -1704,21 +1754,21 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
                             renderer.context.lineWidth = 0.5;
                             renderer.context.beginPath();
                             renderer.context.arc(lx, ly, 10, 0, Math.PIM2);
-                            renderer.context.strokeStyle = light.ambientHex;
+                            renderer.context.strokeStyle = light.ambient;
                             renderer.context.stroke();
                             renderer.context.beginPath();
                             renderer.context.arc(lx, ly, 4, 0, Math.PIM2);
-                            renderer.context.fillStyle = light.diffuseHex;
+                            renderer.context.fillStyle = light.diffuse;
                             renderer.context.fill();
                             break;
                         case SVG:
                             lx += renderer.halfWidth;
                             ly = renderer.halfHeight - ly;
-                            light.core.setAttributeNS(null, 'fill', light.diffuseHex);
+                            light.core.setAttributeNS(null, 'fill', light.diffuse);
                             light.core.setAttributeNS(null, 'cx', lx);
                             light.core.setAttributeNS(null, 'cy', ly);
                             renderer.element.appendChild(light.core);
-                            light.ring.setAttributeNS(null, 'stroke', light.ambientHex);
+                            light.ring.setAttributeNS(null, 'stroke', light.ambient);
                             light.ring.setAttributeNS(null, 'cx', lx);
                             light.ring.setAttributeNS(null, 'cy', ly);
                             renderer.element.appendChild(light.ring);
