@@ -668,24 +668,27 @@ FSS.Mesh.prototype.update = function (lights, calculate) {
 
 
 
-//                 Calculate Ambient Light
+//               Calculate Ambient Light
                 for (var i = 0; i < 4; i++) {
-                    this.material.slave.rgba[i] = .5*(0.5 * this.material.ambient.rgba[i] + (0.5/light_count) * light.ambient.rgba[i]);
+                    this.material.slave.rgba[i] = ((0.5*(1/light_count) * this.material.ambient.rgba[i]) + (0.5*(1/light_count) * light.ambient.rgba[i]));
                     if (i !== 3) {
                         this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i]);
                     }
+					
                 }
+/* 				Add the resultant values to the triangle color vector. Not required to factor illuminance because it is ambient light. */
                 FSS.Vector4.add(triangle.color.rgba, this.material.slave.rgba);
 
                 // Calculate Diffuse Light
                 for (var i = 0; i < 4; i++) {
-                    this.material.slave.rgba[i] = 1*(0.5 * this.material.diffuse.rgba[i] + (0.5/light_count) * light.diffuse.rgba[i]);
+                    this.material.slave.rgba[i] = (0.5*(1/light_count) * this.material.diffuse.rgba[i] + 0.5*(1/light_count) * light.diffuse.rgba[i]);
                     if (i !== 3) {
                         this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i]);
                     }
                 }
-//                FSS.Vector4.multiplyVectors(this.material.slave.rgba, this.material.diffuse.rgba, light.diffuse.rgba);
-//                FSS.Vector4.multiplyScalar(this.material.slave.rgba, illuminance);
+				
+//              FSS.Vector4.multiplyVectors(this.material.slave.rgba, this.material.diffuse.rgba, light.diffuse.rgba);
+//              FSS.Vector4.multiplyScalar(this.material.slave.rgba, illuminance);
                 for (var i = 0; i < 3; i++) {
                     this.material.slave.rgba[i] = Math.round(this.material.slave.rgba[i] * illuminance);
                 }
@@ -1384,7 +1387,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
             xRange: 0.8,
             yRange: 0.1,
             zRange: 1.0,
-            ambient: 'rgba(85, 85, 85, 1)',
+            ambient: 'rgba(85, 85, 85, 1)',//'rgba(85, 85, 85, 1)',
             diffuse: 'rgba(255, 255, 255, 1)',
             speed: 0.002
         };
@@ -1409,8 +1412,8 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
             count: 2,
             xyScalar: 1,
             zOffset: 100,
-            ambient: 'rgba(0, 0, 0, 1)',
-            diffuse: 'rgba(255, 0, 0, 1)',
+            ambient: 'rgba(136,0,102, 1)',
+            diffuse: 'rgba(255,136,0, 1)',
             speed: 0.010,
             gravity: 1200,
             dampening: 0.95,
@@ -1419,7 +1422,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
             minDistance: 20,
             maxDistance: 400,
             autopilot: false,
-            draw: false, //show circle
+            draw: true, //show circle
             bounds: FSS.Vector3.create(),
             step: FSS.Vector3.create(
                     Math.randomInRange(0.2, 1.0),
