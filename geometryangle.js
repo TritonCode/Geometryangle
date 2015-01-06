@@ -1,13 +1,14 @@
 //============================================================
 //
-// This JQuery/JS plgin.
+// Copyright below.
+// 
+// CoAuthor: Patrick Geyer
 //
-// Twitter: https://twitter.com/mwagerfield
-//
+// Twitter: https://twitter.com/PatrickGeyer_
 //
 //============================================================
 
-////============================================================
+//============================================================
 //
 // Copyright (C) 2013 Matthew Wagerfield
 //
@@ -1377,7 +1378,7 @@ FSS.SVGRenderer.prototype.formatStyle = function (color) {
 };
 
 (function () {
-    $.fn.FSS = function (opt) {
+    $.fn.Geometryangle = function (opt) {
         var fss = [];
         var element = $(this);
         var len = element.length, k;
