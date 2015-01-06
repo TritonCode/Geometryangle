@@ -1,6 +1,6 @@
 //============================================================
 //
-// This JQuery/JS
+// This JQuery/JS plgin.
 //
 // Twitter: https://twitter.com/mwagerfield
 //
