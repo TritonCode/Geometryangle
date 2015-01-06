@@ -1,18 +1,18 @@
-# JQuery FSS
+# Geometryangle
 
-[jQuery](http://jquery.com/) plugin that lets you create beautiful and responsive backgrounds to your site. **To get started, check out http://jquery-fss.tritoncode.com/**
+[jQuery](http://jquery.com/) plugin that lets you create beautiful and responsive backgrounds to your site. **To get started, check out http://geometryangle.tritoncode.com/**
 
-Please consider that the project is still in beta. The current status of the milestones can be found [here](https://github.com/TritonCode/jquery-fss/milestones).
+Please consider that the project is still in beta. The current status of the milestones can be found [here](https://github.com/TritonCode/Geometryangle/milestones).
 
 ## Quick start
 
-Download the [latest release](https://github.com/TritonCode/jquery-fss/zipball/master).
+Download the [latest release](https://github.com/TritonCode/Geometryangle/zipball/master).
 
 Put the script at the [bottom](https://developer.yahoo.com/performance/rules.html#js_bottom) of your markup right after jQuery:
 
 ```html
 <script src="jquery.min.js"></script>
-<script src="jquery-fss/fss.js"></script>
+<script src="Geometryangle/geometryangle.js"></script>
 ```
 
 To create a fixed background, do the following:
@@ -30,19 +30,19 @@ Call the [plugin](http://learn.jquery.com/plugins/) function and your navigation
 
 ```javascript
 $(document).ready(function(){
-  $('body').FSS(mesh:{}, lights: [{}], line: {}, vertex: {});
+  $('body').Geometryangle(mesh:{}, lights: [{}], line: {}, vertex: {});
 });
 ```
 
 ## Documentation
 
-The documentation is publicly available at http://jquery-fss.tritoncode.com/
+The documentation is publicly available at http://geometryangle.tritoncode.com/
 
 ## Contributing
 
-The [issue tracker](https://github.com/TritonCode/jquery-fss/issues) is the preferred channel for bug reports, features requests and submitting pull requests.
+The [issue tracker](https://github.com/TritonCode/Geometryangle/issues) is the preferred channel for bug reports, features requests and submitting pull requests.
 
-**Please do not use the issue tracker for personal support requests. Stack Overflow ([`jquery-fss`](http://stackoverflow.com/questions/tagged/jquery-fss)) is a better place to get help.**
+**Please do not use the issue tracker for personal support requests. Stack Overflow ([`Geometryangle`](http://stackoverflow.com/questions/tagged/Geometryangle)) is a better place to get help.**
 
 ### Bug reports
 
@@ -85,9 +85,9 @@ Adhering to the following process is the best way to get your work included in t
   1. [Fork](http://help.github.com/fork-a-repo/) the project, clone your fork, and configure the remotes:
 
     ```bash
-    git clone https://github.com/<your-username>/jquery-fss.git
-    cd jquery-fss
-    git remote add upstream https://github.com/TritonCode/jquery-fss.git
+    git clone https://github.com/<your-username>/Geometryangle.git
+    cd Geometryangle
+    git remote add upstream https://github.com/TritonCode/Geometryangle.git
     ```
 
   2. If you cloned a while ago, get the latest changes from upstream:
