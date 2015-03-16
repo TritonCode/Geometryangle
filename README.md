@@ -30,7 +30,7 @@ Call the [plugin](http://learn.jquery.com/plugins/) function and your navigation
 
 ```javascript
 $(document).ready(function(){
-  $('body').Geometryangle(mesh:{}, lights: [{}], line: {}, vertex: {});
+  $('body').Geometryangle({mesh:{}, lights: [{}], line: {}, vertex: {}});
 });
 ```
 
